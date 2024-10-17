@@ -1,0 +1,2 @@
+javac Client.java  
+java -cp .\mysql-connector-j-9.1.0.jar Client.java
