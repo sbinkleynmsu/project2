@@ -13,103 +13,120 @@ public class Client {
             return;
         }
 
-        int queryNumber = Integer.parseInt(args[0]);
+        int queryNumber;
+        try {
+            queryNumber = Integer.parseInt(args[0]);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid query number format. Please provide a valid number.");
+            return;
+        }
+
         String param = args.length > 1 ? args[1] : null;
 
         switch (queryNumber) {
-            case 1:
-                findSitesByStreet(param);
-                break;
-            case 2:
-                findDisplaysByScheduler(param);
-                break;
-            case 3:
-                listSalesmen();
-                break;
-            case 4:
-                findClientsByPhone(param);
-                break;
-            default:
-                System.out.println("Invalid query number.");
+            case 1 -> findSitesByStreet(param);
+            case 2 -> findDisplaysByScheduler(param);
+            case 3 -> listSalesmen();
+            case 4 -> findClientsByPhone(param);
+            default -> System.out.println("Invalid query number. Please provide a number between 1 and 4.");
         }
     }
 
-    // Method for Question 1: Find sites by street
-    public static void findSitesByStreet(String streetName) {
-        String query = "SELECT * FROM Site WHERE address LIKE ?";
+    // Method to execute a query and handle results
+    private static void executeQuery(String query, QueryHandler handler, String... params) {
         try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            preparedStatement.setString(1, "%" + streetName + "%");
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                System.out.println("Site Code: " + resultSet.getInt("siteCode") + 
-                                   ", Type: " + resultSet.getString("type") + 
-                                   ", Address: " + resultSet.getString("address") +
-                                   ", Phone: " + resultSet.getString("phone"));
+            for (int i = 0; i < params.length; i++) {
+                preparedStatement.setString(i + 1, params[i]);
             }
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (!resultSet.isBeforeFirst()) {
+                System.out.println("No results found.");
+                return;
+            }
+            handler.handle(resultSet);
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println("Error connecting to the database: " + e.getMessage());
         }
     }
 
-    // Method for Question 2: Find digital displays by scheduler system
+    //Question 1: Find sites by street
+    public static void findSitesByStreet(String streetName) {
+        if (streetName == null || streetName.isEmpty()) {
+            System.out.println("Please provide a valid street name.");
+            return;
+        }
+
+        String query = "SELECT * FROM Site WHERE address LIKE ?";
+        executeQuery(query, resultSet -> {
+            while (resultSet.next()) {
+                System.out.printf("Site Code: %d, Type: %s, Address: %s, Phone: %s%n",
+                        resultSet.getInt("siteCode"),
+                        resultSet.getString("type"),
+                        resultSet.getString("address"),
+                        resultSet.getString("phone"));
+            }
+        }, "%" + streetName + "%");
+    }
+
+    //Question 2: Find digital displays by scheduler system
     public static void findDisplaysByScheduler(String schedulerSystem) {
+        if (schedulerSystem == null || schedulerSystem.isEmpty()) {
+            System.out.println("Please provide a valid scheduler system.");
+            return;
+        }
+
         String query = "SELECT DigitalDisplay.serialNo, DigitalDisplay.modelNo, Model.screenSize " +
                        "FROM DigitalDisplay " +
                        "JOIN Model ON DigitalDisplay.modelNo = Model.modelNo " +
                        "WHERE DigitalDisplay.schedulerSystem = ?";
-        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setString(1, schedulerSystem);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
+        executeQuery(query, resultSet -> {
             while (resultSet.next()) {
-                System.out.println("Serial No: " + resultSet.getString("serialNo") + 
-                                   ", Model No: " + resultSet.getString("modelNo") + 
-                                   ", Screen Size: " + resultSet.getDouble("screenSize"));
+                System.out.printf("Serial No: %s, Model No: %s, Screen Size: %.2f%n",
+                        resultSet.getString("serialNo"),
+                        resultSet.getString("modelNo"),
+                        resultSet.getDouble("screenSize"));
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        }, schedulerSystem);
     }
 
-    // Method for Question 3: List distinct salesmen and their count
+    //Question 3: List distinct salesmen and their count
     public static void listSalesmen() {
         String query = "SELECT name, COUNT(*) as cnt FROM Salesman GROUP BY name ORDER BY name ASC";
-        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(query)) {
-
+        executeQuery(query, resultSet -> {
             while (resultSet.next()) {
-                String name = resultSet.getString("name");
-                int count = resultSet.getInt("cnt");
-                System.out.println("Name: " + name + ", Count: " + count);
+                System.out.printf("Name: %s, Count: %d%n",
+                        resultSet.getString("name"),
+                        resultSet.getInt("cnt"));
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        });
     }
 
-    // Method for Question 4: Find clients by phone number
+    //Question 4: Find clients by phone number
     public static void findClientsByPhone(String phoneNo) {
-        String query = "SELECT * FROM Client WHERE phone = ?";
-        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-
-            preparedStatement.setString(1, phoneNo);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            while (resultSet.next()) {
-                System.out.println("Client ID: " + resultSet.getInt("clientId") + 
-                                   ", Name: " + resultSet.getString("name") + 
-                                   ", Phone: " + resultSet.getString("phone") +
-                                   ", Address: " + resultSet.getString("address"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (phoneNo == null || phoneNo.isEmpty()) {
+            System.out.println("Please provide a valid phone number.");
+            return;
         }
+
+        String query = "SELECT * FROM Client WHERE phone = ?";
+        executeQuery(query, resultSet -> {
+            while (resultSet.next()) {
+                System.out.printf("Client ID: %d, Name: %s, Phone: %s, Address: %s%n",
+                        resultSet.getInt("clientId"),
+                        resultSet.getString("name"),
+                        resultSet.getString("phone"),
+                        resultSet.getString("address"));
+            }
+        }, phoneNo);
+    }
+
+    // Functional interface for handling ResultSet
+    @FunctionalInterface
+    interface QueryHandler {
+        void handle(ResultSet resultSet) throws SQLException;
     }
 }

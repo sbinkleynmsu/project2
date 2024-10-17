@@ -5,7 +5,7 @@ commands to run and compile:
 work allocation:
     Shea: Questions 1-4
         java -cp .\mysql-connector-j-9.1.0.jar Client.java 1 "Main Street"
-        java -cp .\mysql-connector-j-9.1.0.jar Client.java 2 "SchedulerX"
+        java -cp .\mysql-connector-j-9.1.0.jar Client.java 2 "Random"
         java -cp .\mysql-connector-j-9.1.0.jar Client.java 3
         java -cp .\mysql-connector-j-9.1.0.jar Client.java 4 "123-456-7890"
         
