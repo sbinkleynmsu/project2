@@ -1,16 +1,16 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
-public class Client {
+public class client {
 
     // Database credentials
-    private static final String URL = "jdbc:mysql://localhost:3306/project1";
-    private static final String USER = "root";
-    private static final String PASSWORD = "218023.Copiper$1";
+    private static final String URL = "jdbc:mysql://localhost:3306/your_database";
+    private static final String USER = "your_username";
+    private static final String PASSWORD = "your_password";
 
     public static void main(String[] args) {
         Connection connection = null;
