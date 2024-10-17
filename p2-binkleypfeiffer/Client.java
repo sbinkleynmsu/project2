@@ -1,9 +1,4 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class Client {
 
@@ -13,83 +8,108 @@ public class Client {
     private static final String PASSWORD = "218023.Copiper$1";
 
     public static void main(String[] args) {
-        Connection connection = null;
-        Statement statement = null;
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
+        if (args.length == 0) {
+            System.out.println("Please provide a query number and necessary parameters.");
+            return;
+        }
 
-        try {
-            // Establish the connection
-            connection = DriverManager.getConnection(URL, USER, PASSWORD);
-            System.out.println("Connected to the MySQL/MariaDB server successfully.");
+        int queryNumber = Integer.parseInt(args[0]);
+        String param = args.length > 1 ? args[1] : null;
 
-            // Create a statement object for executing SQL queries
-            statement = connection.createStatement();
+        switch (queryNumber) {
+            case 1:
+                findSitesByStreet(param);
+                break;
+            case 2:
+                findDisplaysByScheduler(param);
+                break;
+            case 3:
+                listSalesmen();
+                break;
+            case 4:
+                findClientsByPhone(param);
+                break;
+            default:
+                System.out.println("Invalid query number.");
+        }
+    }
 
-            // Example DDL query: Create table if not exists
-            String ddlQuery = "CREATE TABLE IF NOT EXISTS employees (" +
-                              "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                              "name VARCHAR(255) NOT NULL, " +
-                              "position VARCHAR(100), " +
-                              "salary DECIMAL(10, 2), " +
-                              "hire_date DATE)";
-            statement.executeUpdate(ddlQuery);
-            System.out.println("Table 'employees' created successfully.");
+    // Method for Question 1: Find sites by street
+    public static void findSitesByStreet(String streetName) {
+        String query = "SELECT * FROM Site WHERE address LIKE ?";
+        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
-            // Example DML query: Insert data into the table
-            String dmlQuery = "INSERT INTO employees (name, position, salary, hire_date) VALUES (?, ?, ?, ?)";
-            preparedStatement = connection.prepareStatement(dmlQuery);
-            
-            // Inserting multiple rows using batch processing
-            preparedStatement.setString(1, "John Doe");
-            preparedStatement.setString(2, "Software Developer");
-            preparedStatement.setDouble(3, 70000);
-            preparedStatement.setDate(4, java.sql.Date.valueOf("2024-01-15"));
-            preparedStatement.addBatch();
-
-            preparedStatement.setString(1, "Jane Smith");
-            preparedStatement.setString(2, "Project Manager");
-            preparedStatement.setDouble(3, 85000);
-            preparedStatement.setDate(4, java.sql.Date.valueOf("2023-10-10"));
-            preparedStatement.addBatch();
-
-            preparedStatement.setString(1, "Sam Wilson");
-            preparedStatement.setString(2, "Designer");
-            preparedStatement.setDouble(3, 50000);
-            preparedStatement.setDate(4, java.sql.Date.valueOf("2022-05-30"));
-            preparedStatement.addBatch();
-
-            int[] affectedRows = preparedStatement.executeBatch();
-            System.out.println("Inserted " + affectedRows.length + " rows successfully.");
-
-            // Example DML query: Select data from the table
-            String selectQuery = "SELECT * FROM employees";
-            resultSet = statement.executeQuery(selectQuery);
+            preparedStatement.setString(1, "%" + streetName + "%");
+            ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String name = resultSet.getString("name");
-                String position = resultSet.getString("position");
-                double salary = resultSet.getDouble("salary");
-                java.sql.Date hireDate = resultSet.getDate("hire_date");
-
-                System.out.println("ID: " + id + ", Name: " + name + ", Position: " + position +
-                                   ", Salary: " + salary + ", Hire Date: " + hireDate);
+                System.out.println("Site Code: " + resultSet.getInt("siteCode") + 
+                                   ", Type: " + resultSet.getString("type") + 
+                                   ", Address: " + resultSet.getString("address") +
+                                   ", Phone: " + resultSet.getString("phone"));
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            // Close resources
-            try {
-                if (resultSet != null) resultSet.close();
-                if (preparedStatement != null) preparedStatement.close();
-                if (statement != null) statement.close();
-                if (connection != null) connection.close();
-                System.out.println("Connection closed.");
-            } catch (SQLException e) {
-                e.printStackTrace();
+        }
+    }
+
+    // Method for Question 2: Find digital displays by scheduler system
+    public static void findDisplaysByScheduler(String schedulerSystem) {
+        String query = "SELECT DigitalDisplay.serialNo, DigitalDisplay.modelNo, Model.screenSize " +
+                       "FROM DigitalDisplay " +
+                       "JOIN Model ON DigitalDisplay.modelNo = Model.modelNo " +
+                       "WHERE DigitalDisplay.schedulerSystem = ?";
+        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, schedulerSystem);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                System.out.println("Serial No: " + resultSet.getString("serialNo") + 
+                                   ", Model No: " + resultSet.getString("modelNo") + 
+                                   ", Screen Size: " + resultSet.getDouble("screenSize"));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method for Question 3: List distinct salesmen and their count
+    public static void listSalesmen() {
+        String query = "SELECT name, COUNT(*) as cnt FROM Salesman GROUP BY name ORDER BY name ASC";
+        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            while (resultSet.next()) {
+                String name = resultSet.getString("name");
+                int count = resultSet.getInt("cnt");
+                System.out.println("Name: " + name + ", Count: " + count);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method for Question 4: Find clients by phone number
+    public static void findClientsByPhone(String phoneNo) {
+        String query = "SELECT * FROM Client WHERE phone = ?";
+        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, phoneNo);
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                System.out.println("Client ID: " + resultSet.getInt("clientId") + 
+                                   ", Name: " + resultSet.getString("name") + 
+                                   ", Phone: " + resultSet.getString("phone") +
+                                   ", Address: " + resultSet.getString("address"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 }
