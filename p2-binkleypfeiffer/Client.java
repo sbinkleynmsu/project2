@@ -8,8 +8,8 @@ import java.sql.Statement;
 public class Client {
 
     // Database credentials
-    private static final String URL = "jdbc:mysql://localhost:3306/project1";
-    private static final String USER = "root";
+    private static final String URL = "jdbc:mysql://localhost:3306/abcmediabinkleypfeiffer";
+    private static final String USER = "sbinkley";
     private static final String PASSWORD = "218023.Copiper$1";
 
     public static void main(String[] args) {
