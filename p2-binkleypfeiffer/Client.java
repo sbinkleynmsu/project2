@@ -18,6 +18,9 @@ public class Client {
         Statement statement = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
+        if(args.length < 1 || Integer.parseInt(args[0]) > 8 || Integer.parseInt(args[0]) < 1){
+            throw new IllegalArgumentException("PLEASE ADD A NUMBER BETWEEN 1 - 8 TO THE ARGUMENTS");
+        }
         int arg0 = Integer.parseInt(args[0]);
 
         try {
@@ -28,18 +31,22 @@ public class Client {
             // Create a statement object for executing SQL queries
             statement = connection.createStatement();
 
+            //Flag for empty Sets
+            int emptySet = 0;
+
 
             //Question 1: Find sites by street
             if(arg0 == 1){
                 if(args.length != 2){
                     throw new IOException("INCORRECT USAGE ARGUMENTS SHOULD BE: \"1 <street name> \" ");
                 }else{
-                    String streetName = args[1].replace("'", "");
+                    String streetName = args[1].replace("'", "").replace("\"", "");
                     PreparedStatement prepState = connection.prepareStatement("SELECT * FROM Site WHERE address LIKE ?");
-                    prepState.setString(1, streetName);
+                    prepState.setString(1, "%" + streetName + "%");
                     resultSet = prepState.executeQuery();
 
                     while (resultSet.next()) {
+                        emptySet = 1;
                         System.out.printf("Site Code: %d, Type: %s, Address: %s, Phone: %s%n",
                         resultSet.getInt("siteCode"),
                         resultSet.getString("type"),
@@ -63,6 +70,7 @@ public class Client {
                     resultSet = prepState.executeQuery();
 
                     while (resultSet.next()) {
+                        emptySet = 1;
                         System.out.printf("Serial No: %s, Model No: %s, Screen Size: %.2f%n",
                         resultSet.getString("serialNo"),
                         resultSet.getString("modelNo"),
@@ -77,6 +85,7 @@ public class Client {
                 resultSet = statement.executeQuery(selectQuery);
 
                 while (resultSet.next()) {
+                    emptySet = 1;
                     System.out.printf("Name: %s, Count: %d%n",
                     resultSet.getString("name"),
                     resultSet.getInt("cnt"));
@@ -93,6 +102,7 @@ public class Client {
                     resultSet = prepState.executeQuery();
 
                     while (resultSet.next()) {
+                        emptySet = 1;
                         System.out.printf("Client ID: %d, Name: %s, Phone: %s, Address: %s%n",
                         resultSet.getInt("clientId"),
                         resultSet.getString("name"),
@@ -108,6 +118,7 @@ public class Client {
                 resultSet = statement.executeQuery(selectQuery);
 
                 while (resultSet.next()) {
+                    emptySet = 1;
                     int id = resultSet.getInt("empId");
                     String name = resultSet.getString("name");
                     double hours = resultSet.getDouble("Thours");
@@ -128,8 +139,8 @@ public class Client {
                     resultSet = prepState.executeQuery();
 
                     while (resultSet.next()) {
+                        emptySet = 1;
                         String name = resultSet.getString("name");
-
                         System.out.println("Name: " + name);
                     }
                 }
@@ -141,6 +152,8 @@ public class Client {
                 resultSet = statement.executeQuery(selectQuery);
 
                 while (resultSet.next()) {
+                    emptySet = 1;
+
                     String name = resultSet.getString("name");
                     double comRate = resultSet.getDouble("avgComRate");
 
@@ -149,13 +162,14 @@ public class Client {
             }
 
             if(arg0 == 8){
-                int emptySet = 0;
                 String selectQuery = "WITH Admins AS (SELECT COUNT(*) as AdminCt FROM Administrator), SMen " + 
                                      "AS (SELECT COUNT(*) AS SalesCt FROM Salesman), TechSupp AS (SELECT COUNT(*) AS TechCt FROM TechnicalSupport) " + 
                                      "SELECT * FROM Admins, SMen, TechSupp";
                 resultSet = statement.executeQuery(selectQuery);
 
                 if(resultSet.next()){
+                    emptySet = 1;
+
                     int adminCt = resultSet.getInt("AdminCt");
                     int salesCt = resultSet.getInt("SalesCt");
                     int techCt = resultSet.getInt("TechCt");
@@ -167,11 +181,10 @@ public class Client {
                     System.out.printf("%-15s     |%6d\n", "Technicians", techCt);
                     emptySet = 1;
                 }
+            }
 
-                if(emptySet == 0){
-                    System.out.println("No Results Found");
-                }
-
+            if(emptySet == 0){
+                System.out.println("No Results Found");
             }
 
         } catch (SQLException e) {
