@@ -28,6 +28,80 @@ public class Client {
             // Create a statement object for executing SQL queries
             statement = connection.createStatement();
 
+
+            //Question 1: Find sites by street
+            if(arg0 == 1){
+                if(args.length != 2){
+                    throw new IOException("INCORRECT USAGE ARGUMENTS SHOULD BE: \"1 <street name> \" ");
+                }else{
+                    String streetName = args[1].replace("'", "");
+                    PreparedStatement prepState = connection.prepareStatement("SELECT * FROM Site WHERE address LIKE ?");
+                    prepState.setString(1, streetName);
+                    resultSet = prepState.executeQuery();
+
+                    while (resultSet.next()) {
+                        System.out.printf("Site Code: %d, Type: %s, Address: %s, Phone: %s%n",
+                        resultSet.getInt("siteCode"),
+                        resultSet.getString("type"),
+                        resultSet.getString("address"),
+                        resultSet.getString("phone"));
+                    }
+                }
+            }
+
+            //Question 2: Find digital displays by scheduler system
+            if(arg0 == 2){
+                if(args.length != 2){
+                    throw new IOException("INCORRECT USAGE ARGUMENTS SHOULD BE: \"2 <scheduler system> \" ");
+                }else{
+                    String schedSys = args[1].replace("'", "");
+                    PreparedStatement prepState = connection.prepareStatement("SELECT DigitalDisplay.serialNo, DigitalDisplay.modelNo, Model.screenSize " +
+                                                                   "FROM DigitalDisplay " +
+                                                                                  "JOIN Model ON DigitalDisplay.modelNo = Model.modelNo " +
+                                                                                  "WHERE DigitalDisplay.schedulerSystem = ?");
+                    prepState.setString(1, schedSys);
+                    resultSet = prepState.executeQuery();
+
+                    while (resultSet.next()) {
+                        System.out.printf("Serial No: %s, Model No: %s, Screen Size: %.2f%n",
+                        resultSet.getString("serialNo"),
+                        resultSet.getString("modelNo"),
+                        resultSet.getDouble("screenSize"));
+                    }
+                }
+            }
+
+            //Question 3: List distinct salesmen and their count
+            if(arg0 == 3){
+                String selectQuery = "SELECT name, COUNT(*) as cnt FROM Salesman GROUP BY name ORDER BY name ASC";
+                resultSet = statement.executeQuery(selectQuery);
+
+                while (resultSet.next()) {
+                    System.out.printf("Name: %s, Count: %d%n",
+                    resultSet.getString("name"),
+                    resultSet.getInt("cnt"));
+                }
+            }
+
+            if(arg0 == 4){
+                if(args.length != 2){
+                    throw new IOException("INCORRECT USAGE ARGUMENTS SHOULD BE: \"4 <phone no> \" ");
+                }else{
+                    String phoneNo = args[1].replace("'", "");
+                    PreparedStatement prepState = connection.prepareStatement("SELECT * FROM Client WHERE phone = ?");
+                    prepState.setString(1, phoneNo);
+                    resultSet = prepState.executeQuery();
+
+                    while (resultSet.next()) {
+                        System.out.printf("Client ID: %d, Name: %s, Phone: %s, Address: %s%n",
+                        resultSet.getInt("clientId"),
+                        resultSet.getString("name"),
+                        resultSet.getString("phone"),
+                        resultSet.getString("address"));
+                    }
+                }
+            }
+
             if(arg0 == 5){
                 String selectQuery = "With TempTable(AdId, THours) AS (SELECT empId, SUM(hours) FROM AdmWorkHours GROUP BY empId) SELECT " +
                                      "Administrator.empId, Administrator.name, Temptable.THours FROM Administrator, TempTable WHERE Administrator.empId = TempTable.AdId ORDER BY TempTable.THours ASC";
