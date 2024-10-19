@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -9,14 +10,15 @@ public class Client {
 
     // Database credentials
     private static final String URL = "jdbc:mysql://localhost:3306/abcmediabinkleypfeiffer";
-    private static final String USER = "sbinkley";
-    private static final String PASSWORD = "218023.Copiper$1";
+    private static final String USER = "root";
+    private static final String PASSWORD = "Lcj703922!";
 
     public static void main(String[] args) {
         Connection connection = null;
         Statement statement = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
+        int arg0 = Integer.parseInt(args[0]);
 
         try {
             // Establish the connection
@@ -26,60 +28,84 @@ public class Client {
             // Create a statement object for executing SQL queries
             statement = connection.createStatement();
 
-            // Example DDL query: Create table if not exists
-            String ddlQuery = "CREATE TABLE IF NOT EXISTS employees (" +
-                              "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                              "name VARCHAR(255) NOT NULL, " +
-                              "position VARCHAR(100), " +
-                              "salary DECIMAL(10, 2), " +
-                              "hire_date DATE)";
-            statement.executeUpdate(ddlQuery);
-            System.out.println("Table 'employees' created successfully.");
+            if(arg0 == 5){
+                String selectQuery = "With TempTable(AdId, THours) AS (SELECT empId, SUM(hours) FROM AdmWorkHours GROUP BY empId) SELECT " +
+                                     "Administrator.empId, Administrator.name, Temptable.THours FROM Administrator, TempTable WHERE Administrator.empId = TempTable.AdId ORDER BY TempTable.THours ASC";
+                resultSet = statement.executeQuery(selectQuery);
 
-            // Example DML query: Insert data into the table
-            String dmlQuery = "INSERT INTO employees (name, position, salary, hire_date) VALUES (?, ?, ?, ?)";
-            preparedStatement = connection.prepareStatement(dmlQuery);
-            
-            // Inserting multiple rows using batch processing
-            preparedStatement.setString(1, "John Doe");
-            preparedStatement.setString(2, "Software Developer");
-            preparedStatement.setDouble(3, 70000);
-            preparedStatement.setDate(4, java.sql.Date.valueOf("2024-01-15"));
-            preparedStatement.addBatch();
+                while (resultSet.next()) {
+                    int id = resultSet.getInt("empId");
+                    String name = resultSet.getString("name");
+                    double hours = resultSet.getDouble("Thours");
 
-            preparedStatement.setString(1, "Jane Smith");
-            preparedStatement.setString(2, "Project Manager");
-            preparedStatement.setDouble(3, 85000);
-            preparedStatement.setDate(4, java.sql.Date.valueOf("2023-10-10"));
-            preparedStatement.addBatch();
+                    System.out.println("ID: " + id + ", Name: " + name +
+                                       ", Total Hours: " + hours);
+                }
+            }
 
-            preparedStatement.setString(1, "Sam Wilson");
-            preparedStatement.setString(2, "Designer");
-            preparedStatement.setDouble(3, 50000);
-            preparedStatement.setDate(4, java.sql.Date.valueOf("2022-05-30"));
-            preparedStatement.addBatch();
+            if(arg0 == 6){
+                if(args.length != 2){
+                    throw new IOException("INCORRECT USAGE ARGUMENTS SHOULD BE: \"6 <model number> \" ");
+                }else{
+                    String modelNo = args[1].replace("'", "");
+                    PreparedStatement prepState = connection.prepareStatement("SELECT TechnicalSupport.name FROM TechnicalSupport, Specializes WHERE Specializes.modelNo = ? " +
+                                         "AND Specializes.empId = TechnicalSupport.empId");
+                    prepState.setString(1, modelNo);
+                    resultSet = prepState.executeQuery();
 
-            int[] affectedRows = preparedStatement.executeBatch();
-            System.out.println("Inserted " + affectedRows.length + " rows successfully.");
+                    while (resultSet.next()) {
+                        String name = resultSet.getString("name");
 
-            // Example DML query: Select data from the table
-            String selectQuery = "SELECT * FROM employees";
-            resultSet = statement.executeQuery(selectQuery);
+                        System.out.println("Name: " + name);
+                    }
+                }
+            }
 
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String name = resultSet.getString("name");
-                String position = resultSet.getString("position");
-                double salary = resultSet.getDouble("salary");
-                java.sql.Date hireDate = resultSet.getDate("hire_date");
+            if(arg0 == 7){
+                String selectQuery = "WITH TempTable(SId, avgComRate) AS (SELECT empId, AVG(commissionRate) FROM Purchases GROUP BY empId) SELECT Salesman.name," + 
+                                    " TempTable.avgComRate FROM Salesman, Temptable WHERE TempTable.SId = Salesman.empId ORDER BY avgComRate DESC";
+                resultSet = statement.executeQuery(selectQuery);
 
-                System.out.println("ID: " + id + ", Name: " + name + ", Position: " + position +
-                                   ", Salary: " + salary + ", Hire Date: " + hireDate);
+                while (resultSet.next()) {
+                    String name = resultSet.getString("name");
+                    double comRate = resultSet.getDouble("avgComRate");
+
+                    System.out.println("Name: " + name + ", Average Commission Rate: " + comRate);
+                }
+            }
+
+            if(arg0 == 8){
+                int emptySet = 0;
+                String selectQuery = "WITH Admins AS (SELECT COUNT(*) as AdminCt FROM Administrator), SMen " + 
+                                     "AS (SELECT COUNT(*) AS SalesCt FROM Salesman), TechSupp AS (SELECT COUNT(*) AS TechCt FROM TechnicalSupport) " + 
+                                     "SELECT * FROM Admins, SMen, TechSupp";
+                resultSet = statement.executeQuery(selectQuery);
+
+                if(resultSet.next()){
+                    int adminCt = resultSet.getInt("AdminCt");
+                    int salesCt = resultSet.getInt("SalesCt");
+                    int techCt = resultSet.getInt("TechCt");
+                
+                    System.out.printf("%-15s     %6s\n", "Role", "ct");
+                    System.out.println("----------------------------");
+                    System.out.printf("%-15s     |%6d\n", "Administrators", adminCt);
+                    System.out.printf("%-15s     |%6d\n", "Salesmen", salesCt);
+                    System.out.printf("%-15s     |%6d\n", "Technicians", techCt);
+                    emptySet = 1;
+                }
+
+                if(emptySet == 0){
+                    System.out.println("No Results Found");
+                }
+
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        finally {
             // Close resources
             try {
                 if (resultSet != null) resultSet.close();
