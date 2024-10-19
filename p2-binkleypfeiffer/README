@@ -10,3 +10,7 @@ work allocation:
         java -cp .\mysql-connector-j-9.1.0.jar Client.java 4 "123-456-7890"
         
     Vestine: Questions 5-8
+        java -cp .\mysql-connector-j-9.1.0.jar Client.java 5
+        java -cp .\mysql-connector-j-9.1.0.jar Client.java 6
+        java -cp .\mysql-connector-j-9.1.0.jar Client.java 7 MOD123a
+        java -cp .\mysql-connector-j-9.1.0.jar Client.java 8
